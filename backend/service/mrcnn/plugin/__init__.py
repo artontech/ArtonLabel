@@ -3,6 +3,7 @@ import ctypes.util
 import imp
 import json
 import logging
+from distutils.version import LooseVersion
 import os
 
 import cv2
@@ -21,12 +22,17 @@ class Plugin():
     self.module = imp.load_module(name, file, filename, desc)
 
     # After python 3.8, add_dll_directory should be invoke before loading cuda lib
-    dll_path = ctypes.util.find_library("cudnn_cnn_infer64_8")
-    cuda_bin_path = os.path.dirname(dll_path) + os.path.sep
-    logging.info("cuda_bin_path: %s", cuda_bin_path)
-    os.add_dll_directory(cuda_bin_path)
-    # from ctypes import WinDLL
-    # cudnn_cnn_infer64_8 = WinDLL("cudnn_cnn_infer64_8.dll")
+    if LooseVersion(keras.__version__) >= LooseVersion('2.7.0'):
+      dll_path = ctypes.util.find_library("cudnn_cnn_infer64_8")
+      if dll_path is None:
+        logging.warning("cannot find cuda_bin_path!")
+      else:
+        cuda_bin_path = os.path.dirname(dll_path) + os.path.sep
+        logging.info("cuda_bin_path: %s", cuda_bin_path)
+        os.add_dll_directory(cuda_bin_path)
+        from ctypes import WinDLL
+        cudnn_cnn_infer64_8 = WinDLL("cudnn_cnn_infer64_8.dll")
+        cudnn_cnn_infer64_8 = WinDLL("cudnn_ops_train64_8.dll")
 
     # Directory to save logs and trained model
     self.model_dir = option.model_path
