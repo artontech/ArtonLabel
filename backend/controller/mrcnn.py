@@ -2,7 +2,6 @@
 
 import json
 import logging
-import tornado.gen
 from tornado.concurrent import run_on_executor
 
 from backend.controller.default import (DefaultHandler, DefaultWSHandler)
@@ -31,18 +30,17 @@ class Detect(DefaultHandler):
     def data_received(self, chunk):
         pass
 
-    def get(self):
+    async def get(self):
         ''' get '''
-        self.post()
+        await self.post()
 
-    @tornado.gen.coroutine
-    def post(self):
+    async def post(self):
         ''' post '''
         dataset_path = self.get_arg("dataset_path")
         image_name = self.get_arg("image_name")
         plugin_name = self.get_arg("plugin_name")
 
-        yield self.detect_executor(dataset_path, image_name, plugin_name)
+        await self.detect_executor(dataset_path, image_name, plugin_name)
 
     @run_on_executor
     def detect_executor(self, dataset_path, image_name, plugin_name):
@@ -56,17 +54,16 @@ class Train(DefaultHandler):
     def data_received(self, chunk):
         pass
 
-    def get(self):
+    async def get(self):
         ''' get '''
-        self.post()
+        await self.post()
 
-    @tornado.gen.coroutine
-    def post(self):
+    async def post(self):
         ''' post '''
         dataset_dir = self.get_arg("dataset_dir")
         plugin_name = self.get_arg("plugin_name")
 
-        yield self.train_executor(dataset_dir)
+        await self.train_executor(dataset_dir)
 
     @run_on_executor
     def train_executor(self, dataset_dir, plugin_name):

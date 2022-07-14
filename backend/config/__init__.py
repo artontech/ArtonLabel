@@ -5,7 +5,7 @@ import sys
 
 # 解决windows环境python3.8下可能出现的问题
 import asyncio
-if sys.platform == 'win32':
+if sys.platform == 'win32' and sys.version_info.major == 3 and sys.version_info.minor == 8:
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from tornado.options import define, options, parse_config_file

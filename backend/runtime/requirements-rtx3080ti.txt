@@ -1,0 +1,7 @@
+imgaug
+matplotlib
+numpy
+opencv-python==4.5.4.60
+pycocotools
+scikit-image==0.19.3
+tensorflow-gpu==2.9.1

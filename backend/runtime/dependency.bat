@@ -1,5 +1,5 @@
 @ECHO OFF
-SET DEVICE_VERSION=rtx3060
+SET DEVICE_VERSION=rtx3080ti
 SET BASE_REPO_PATH=.\Lib\site-packages
 SET EXTRA_REPO_PATH=.\site-packages-%DEVICE_VERSION%
 SET MIRROR=-i https://pypi.tuna.tsinghua.edu.cn/simple/
