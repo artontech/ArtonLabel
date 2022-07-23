@@ -24,17 +24,6 @@ import tensorflow.keras.models as KM
 
 from . import utils
 
-# ==========================================================
-# For RTX2080Ti:
-# Tensorflow 2.2
-# CUDA 10.1.105_418.96
-# cuDNN v7.6.5 (November 5th, 2019), for CUDA 10.1
-# ==========================================================
-# For RTX3060
-# Tensorflow 2.7
-# CUDA 11.5.0_496.13
-# cuDNN v8.2.2 (July 6th, 2021), for CUDA 11.4
-# ==========================================================
 from distutils.version import LooseVersion
 assert LooseVersion(tf.__version__) >= LooseVersion("2.2.0")
 assert LooseVersion(keras.__version__) >= LooseVersion('2.3.0-tf')

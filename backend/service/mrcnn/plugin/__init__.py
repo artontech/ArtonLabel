@@ -20,6 +20,7 @@ class Plugin():
     file, filename, desc = imp.find_module(name, path=[PLUGIN_DIR])
     self.mode = mode
     self.module = imp.load_module(name, file, filename, desc)
+    self.name = name
 
     # After python 3.8, add_dll_directory should be invoke before loading cuda lib
     if LooseVersion(keras.__version__) >= LooseVersion('2.7.0'):
@@ -41,6 +42,16 @@ class Plugin():
 
   def detect(self, dataset_path, image_name):
     ''' detect '''
+    annotation_dir = os.path.join(dataset_path, "annotation", image_name)
+    annotation_path = os.path.join(annotation_dir, "annotation.json")
+    plugin_name = "mrcnn-%s" % (self.name)
+    if os.path.exists(annotation_path):
+      with open(annotation_path, 'r') as fp:
+        annotation = json.load(fp)
+      if plugin_name in annotation.get("done", []):
+        # Already done
+        return annotation_path
+
     image_path = os.path.join(dataset_path, "source", image_name)
     image = skimage.io.imread(image_path)
     # image = cv2.imread(image_path)
@@ -48,7 +59,7 @@ class Plugin():
 
     r = self.model.detect([image], verbose=1)[0]
     return save_annotation(
-      dataset_path, image_name, image.shape,
+      annotation_dir, annotation_path, plugin_name, image.shape,
       self.module.get_class_names(self), 
       r["rois"], r["class_ids"], r["masks"], r["scores"]
     )
@@ -62,7 +73,7 @@ class Plugin():
     self.module.train(self, dataset_dir)
 
 def save_annotation(
-  dataset_path, image_name, image_shape, 
+  annotation_dir, annotation_path, plugin_name, image_shape, 
   class_names, boxes, class_ids, masks, scores,
   save_polygon=False
   ):
@@ -72,7 +83,6 @@ def save_annotation(
     masks: [height, width, num_instances]
     scores: (optional) confidence scores for each box
   """
-  annotation_dir = os.path.join(dataset_path, "annotation", image_name)
   os.makedirs(annotation_dir, exist_ok=True)
 
   instance_count = boxes.shape[0]
@@ -112,10 +122,18 @@ def save_annotation(
       "scores": float(scores[i]),
     })
 
-  annotation = {
-    "instances": instances
-  }
-  annotation_path = os.path.join(annotation_dir, "annotation.json")
+  if os.path.exists(annotation_path):
+    with open(annotation_path, 'r') as fp:
+      annotation = json.load(fp)
+
+    annotation.setdefault("instances", []).extend(instances)
+    annotation.setdefault("done", []).append(plugin_name)
+  else:
+    annotation = {
+      "instances": instances,
+      "done": [plugin_name]
+    }
+
   with open(annotation_path, 'w') as fp:
     json.dump(annotation, fp)
   return annotation_path

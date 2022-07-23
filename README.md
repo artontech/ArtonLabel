@@ -21,7 +21,7 @@
 2. Install dependency
 * Edit .\runtime\dependency.bat, replace the value of DEVICE_VERSION according to your device, such as:
 ```cmd
-SET DEVICE_VERSION=rtx3060
+SET DEVICE_VERSION=rtx3080ti
 ```
 * Run .\runtime\dependency.bat
 * Create config file .\conf\tornado.conf, for example:
