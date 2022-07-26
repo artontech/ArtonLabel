@@ -18,13 +18,15 @@ class File(DefaultHandler):
 
     def post(self):
         ''' post '''
-        path = self.get_arg("path")
+        workspace = self.get_arg("workspace")
+        filename = self.get_arg("filename")
 
+        source_dir = os.path.join(workspace, "source")
+        path = os.path.join(source_dir, filename)
         if not os.path.exists(path):
             self.write_json(err="no_data", data={"file": path}, status_code=404)
             return
 
-        filename = os.path.basename(path)
         with open(path, 'rb') as f:
             data = f.read()
 

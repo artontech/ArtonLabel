@@ -36,16 +36,16 @@ class Detect(DefaultHandler):
 
     async def post(self):
         ''' post '''
-        dataset_path = self.get_arg("dataset_path")
+        workspace = self.get_arg("workspace")
         image_name = self.get_arg("image_name")
         plugin_name = self.get_arg("plugin_name")
 
-        await self.detect_executor(dataset_path, image_name, plugin_name)
+        await self.detect_executor(workspace, image_name, plugin_name)
 
     @run_on_executor
-    def detect_executor(self, dataset_path, image_name, plugin_name):
+    def detect_executor(self, workspace, image_name, plugin_name):
         mrcnn.init(mode="inference", plugin_name=plugin_name)
-        result = mrcnn.detect(dataset_path, image_name)
+        result = mrcnn.detect(workspace, image_name)
         self.write_json(status="success", data=result)
 
 class Train(DefaultHandler):

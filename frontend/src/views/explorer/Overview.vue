@@ -87,7 +87,6 @@ export default {
     return {
       breadcrumb: [breadcrumb_home],
       checked: null,
-      repository: null,
       setting: null,
       data,
       file_view: "grid",
@@ -106,15 +105,22 @@ export default {
       }
     },
     goto(target, event) {
-      const vm = this;
-      console.log("goto", target, event, vm);
+      event;
+      const routeData = this.$router.resolve({
+        path: "/editor",
+        query: {
+          filename: target.fullname,
+        },
+      });
+      window.open(routeData.href, "_blank");
     },
     list() {
       const vm = this;
 
       // Sending request
+      const workspace = vm.setting.workspace;
       const body = {
-        workspace: vm.setting.workspace,
+        workspace,
         thumb: vm.setting.showthumb,
         page_no: vm.page_no,
         page_size: vm.page_size,
@@ -131,11 +137,9 @@ export default {
               vm.data.splice(0, vm.data.length);
               data.list?.forEach((obj) => {
                 obj.icon = `http://${vm.setting.address}${obj.icon}`;
-                obj.thumb = `http://${vm.setting.address}/io/file?path=${obj.thumb}`;
+                obj.thumb = `http://${vm.setting.address}/io/file?workspace=${workspace}&filename=${obj.fullname}`;
 
                 // Add more attr
-                obj.fullname = obj.name + obj.ext;
-
                 if (obj.fullname?.length > 6) {
                   obj.title = `${obj.fullname.slice(0, 6)}...`;
                 } else {

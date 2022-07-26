@@ -1,13 +1,16 @@
 ''' router '''
 from tornado.web import Application
 
-from backend.controller import (error, io, mrcnn, workspace)
+from backend.controller import (annotation, error, io, mrcnn, workspace)
 from backend import config
 
 def make_app():
     ''' make app '''
     options = config.get_options()
     return Application([
+        (r"/annotation/load", annotation.Load, dict(name="load annotation")),
+        (r"/annotation/loadMask", annotation.LoadMask, dict(name="load mask")),
+
         (r"/io/file", io.File, dict(name="get file")),
 
         (r"/mrcnn", mrcnn.MrcnnWebSocket),

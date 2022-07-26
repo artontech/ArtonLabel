@@ -93,7 +93,7 @@ export default {
             vm.btn1_loading = false;
             if (resp.body.status === "success") {
               vm.$store.commit("updateSetting", values);
-              vm.$router.go("Overview", `token=1`);
+              vm.$router.go("Overview", ``);
             } else {
               onError();
             }

@@ -63,14 +63,13 @@ class Overview(DefaultHandler):
     async def post(self):
         ''' post '''
         workspace = self.get_arg("workspace")
-        thumb = self.get_arg("thumb", True)
         page_no = self.get_arg("page_no", 1)
         page_size = self.get_arg("page_size", 15)
 
-        await self.overview_executor(workspace, thumb, page_no, page_size)
+        await self.overview_executor(workspace, page_no, page_size)
 
     @run_on_executor
-    def overview_executor(self, workspace, thumb, page_no, page_size):
+    def overview_executor(self, workspace, page_no, page_size):
         if not os.path.exists(workspace):
             self.write_json(err="no_workspace")
             return
@@ -86,7 +85,7 @@ class Overview(DefaultHandler):
 
             obj = FileDO()
             obj.none()
-            obj.thumb = os.path.join(source_dir, file_list[i])
+            obj.fullname = file_list[i]
             obj.type = "file"
             obj.icon = self.static_url("image.png")
             obj.name, obj.ext = os.path.splitext(file_list[i])

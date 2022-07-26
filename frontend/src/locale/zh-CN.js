@@ -23,10 +23,16 @@ const all = {
   move_to: "移动到",
   delete: "删除",
   rename: "重命名",
+  load: "加载",
+  model: "模型",
+  plugin: "插件",
 };
 
 const app = {
   project_name: "ArtonLabel",
+  load_model: "加载模型",
+  draw_mask: "遮罩",
+  draw_roi: "ROI",
 };
 
 const config_panel = {

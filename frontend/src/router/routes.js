@@ -14,6 +14,11 @@ const routes = [
     // which is lazy-loaded when the route is visited.
     component: () => import("../views/explorer/Overview.vue"),
   },
+  {
+    path: "/editor",
+    name: "Editor",
+    component: () => import("../views/label/Editor.vue"),
+  },
 ];
 
 export default routes;

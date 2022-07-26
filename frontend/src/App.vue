@@ -24,10 +24,10 @@ export default {
   },
   computed: {
     hasFooter() {
-      return ["Index", "Overview"].indexOf(this.$route.name) > -1;
+      return ["Index", "Overview", "Editor"].indexOf(this.$route.name) > -1;
     },
     hasMainHeader() {
-      return ["Index", "Overview"].indexOf(this.$route.name) > -1;
+      return ["Index", "Overview", "Editor"].indexOf(this.$route.name) > -1;
     },
     hasMenu() {
       return [""].indexOf(this.$route.name) > -1;
@@ -54,7 +54,7 @@ export default {
 }
 
 .view-wrapper {
-  min-height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px);
+  min-height: calc(100vh - 92px);
+  max-height: calc(100vh - 92px);
 }
 </style>

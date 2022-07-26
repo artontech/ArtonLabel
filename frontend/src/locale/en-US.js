@@ -23,10 +23,16 @@ const all = {
   move_to: "Move to",
   delete: "Delete",
   rename: "Rename",
+  load: "Load",
+  model: "Model",
+  plugin: "Plugin",
 };
 
 const app = {
   project_name: "ArtonLabel",
+  load_model: "Load Model",
+  draw_mask: "Mask",
+  draw_roi: "ROI",
 };
 
 const config_panel = {

@@ -5,6 +5,7 @@ import json
 import logging
 from distutils.version import LooseVersion
 import os
+import uuid
 
 import cv2
 import numpy as np
@@ -94,8 +95,9 @@ def save_annotation(
       # Skip this instance. Has no bbox. Likely lost in image cropping.
       continue
 
+    key = str(uuid.uuid4()).replace('-', '_')
     mask = masks[:, :, i]
-    mask_file_name = "mask_%d.png" % (i)
+    mask_file_name = "mask_%s.png" % (key)
     mask_file_path = os.path.join(annotation_dir, mask_file_name)
     save_mask(mask_file_path, height, width, mask)
 
@@ -114,8 +116,8 @@ def save_annotation(
     
     b_box = boxes[i].tolist()
     instances.append({
-      # [left, top, right, bottom]
-      "roi": [b_box[1], b_box[0], b_box[3], b_box[2]],
+      "key": key,
+      "roi": [b_box[1], b_box[0], b_box[3], b_box[2]], # [left, top, right, bottom]
       "mask": mask_file_name,
       "polygon": polygon,
       "class": class_names[class_id],
