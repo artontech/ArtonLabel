@@ -5,9 +5,9 @@
         <span>
           {{ $t("all.model") }}:
           <a-select
+            class="toolbox-child"
             default-value="mrcnn"
             size="small"
-            style="width: 120px"
             @change="onSelect1Change"
           >
             <a-select-option value="mrcnn"> MRCNN </a-select-option>
@@ -20,9 +20,9 @@
         <span>
           {{ $t("all.plugin") }}:
           <a-input
+            class="toolbox-child"
             size="small"
             placeholder="Plugin"
-            style="width: 120px"
             v-model="plugin"
           />
         </span>
@@ -415,9 +415,15 @@ export default {
 }
 
 .toolbox {
-  width: 250px;
+  width: 20vw;
+  min-width: 250px;
+  max-width: 500px;
   height: 100%;
   margin-right: 5px;
+}
+
+.toolbox-child {
+  width: 120px;
 }
 
 .konva-container {
