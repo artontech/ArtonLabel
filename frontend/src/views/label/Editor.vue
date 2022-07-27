@@ -122,6 +122,7 @@ export default {
         pageSize: 5,
       },
       selectedInstances: null,
+      classes: [],
     };
   },
   methods: {
@@ -180,7 +181,7 @@ export default {
             height: img.attrs.image.naturalHeight,
             x: 0,
             y: 0,
-            draggable: true,
+            draggable: false,
           });
           vm.layer.add(img);
           vm.rescalePicture(img);
@@ -189,6 +190,32 @@ export default {
           vm.roiGroup.zIndex(2);
         }
       );
+
+      // Sending request
+      const body = {
+        workspace,
+      };
+      const onError = () => {
+        console.log(`[Error] failed to load annotation config ${body.image_name}`);
+      };
+      vm.$http
+        .post(`http://${vm.setting.address}/annotation/loadConfig`, body, options)
+        .then(
+          (resp) => {
+            const data = resp.body?.data;
+            if (data && resp.body?.status === "success") {
+              vm.classes.splice(0, vm.classes.length);
+              data.classes?.forEach((cls) => {
+                vm.classes.push(cls);
+              });
+            } else {
+              onError();
+            }
+          },
+          (error) => {
+            onError(error);
+          }
+        );
     },
     loadAnnotation() {
       const vm = this;
@@ -272,12 +299,13 @@ export default {
       vm.clearShape();
       vm.selectedInstances?.forEach((instance) => {
         const roi = instance.roi;
+        const color = vm.getClassInfo(instance.class)?.color;
         var rect = new Konva.Rect({
           x: roi[0],
           y: roi[1],
           width: roi[2] - roi[0],
           height: roi[3] - roi[1],
-          fill: "green",
+          fill: color ?? "black",
           stroke: "black",
           strokeWidth: 4,
         });
@@ -398,7 +426,15 @@ export default {
       const vm = this;
       vm.maskGroup.destroyChildren();
       vm.roiGroup.destroyChildren();
-    }
+    },
+    getClassInfo(name) {
+      const vm = this;
+      for (let i = 0; i < vm.classes.length; i++) {
+        const cls = vm.classes[i];
+        if (name === cls.name) return cls;
+      }
+      return null;
+    },
   },
   mounted() {
     const vm = this;

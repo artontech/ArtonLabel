@@ -9,6 +9,7 @@ def make_app():
     options = config.get_options()
     return Application([
         (r"/annotation/load", annotation.Load, dict(name="load annotation")),
+        (r"/annotation/loadConfig", annotation.LoadConfig, dict(name="load annotation config")),
         (r"/annotation/loadMask", annotation.LoadMask, dict(name="load mask")),
 
         (r"/io/file", io.File, dict(name="get file")),

@@ -36,6 +36,33 @@ class Load(DefaultHandler):
             result = json.load(f)
         self.write_json(status="success", data=result)
 
+class LoadConfig(DefaultHandler):
+    ''' load annotation config '''
+
+    def data_received(self, chunk):
+        pass
+
+    async def get(self):
+        ''' get '''
+        await self.post()
+
+    async def post(self):
+        ''' post '''
+        workspace = self.get_arg("workspace")
+
+        await self.load_executor(workspace)
+
+    @run_on_executor
+    def load_executor(self, workspace):
+        path = os.path.join(workspace, "annotation_config.json")
+        if not os.path.exists(path):
+            self.write_json(err="no_data", data={"file": path}, status_code=404)
+            return
+
+        with open(path, 'r') as f:
+            result = json.load(f)
+        self.write_json(status="success", data=result)
+
 class LoadMask(DefaultHandler):
     ''' load mask '''
 
