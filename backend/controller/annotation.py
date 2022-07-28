@@ -5,7 +5,7 @@ import os
 from tornado.concurrent import run_on_executor
 
 from backend.controller.default import (DefaultHandler)
-from backend.util import (url)
+from backend.util import (pic, url)
 
 class Load(DefaultHandler):
     ''' load annotation '''
@@ -56,8 +56,16 @@ class LoadConfig(DefaultHandler):
     def load_executor(self, workspace):
         path = os.path.join(workspace, "annotation_config.json")
         if not os.path.exists(path):
-            self.write_json(err="no_data", data={"file": path}, status_code=404)
-            return
+            default_annotation_config = {
+                "classes": [
+                    {
+                        "name": "unknown",
+                        "color": "#000000"
+                    }
+                ]
+            }
+            with open(path, 'w') as f:
+                json.dump(default_annotation_config, f)
 
         with open(path, 'r') as f:
             result = json.load(f)
@@ -91,6 +99,7 @@ class LoadMask(DefaultHandler):
 
         with open(path, 'rb') as f:
             data = f.read()
+            data = pic.cv2bytes(pic.cv2transparent(pic.bytes2cv(data), 0))
 
             self.set_header('Content-Type', 'application/octet-stream')
             self.set_header('Content-Disposition', 'attachment; filename=' + url.encode(mask_name))

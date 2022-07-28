@@ -141,7 +141,7 @@ def save_annotation(
   return annotation_path
 
 def save_mask(file_path, height, width, mask):
-  image = np.ones([height, width, 3], dtype=np.uint8)
+  image = np.zeros([height, width, 3], dtype=np.uint8)
   color = [255, 255, 255] # BGR
   for c in range(3):
     image[:, :, c] = np.where(

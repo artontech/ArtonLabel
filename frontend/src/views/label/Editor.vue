@@ -251,7 +251,25 @@ export default {
           }
         );
     },
-    loadMask() {},
+    loadMask(mask) {
+      const vm = this;
+      
+      // Sending request
+      const workspace = vm.setting.workspace;
+      Konva.Image.fromURL(
+        `http://${vm.setting.address}/annotation/loadMask?workspace=${workspace}&image_name=${vm.filename}&mask_name=${mask}`,
+        (img) => {
+          img.setAttrs({
+            width: img.attrs.image.naturalWidth,
+            height: img.attrs.image.naturalHeight,
+            x: 0,
+            y: 0,
+            draggable: false,
+          });
+          vm.maskGroup.add(img);
+        }
+      );
+    },
     onClose() {
       const vm = this;
       if (vm.layer) {
@@ -292,7 +310,9 @@ export default {
     onButton2Click() {
       const vm = this;
       vm.clearShape();
-      console.log(vm.selectedInstances);
+      vm.selectedInstances?.forEach((instance) => {
+        vm.loadMask(instance.mask);
+      });
     },
     onButton3Click() {
       const vm = this;
