@@ -33,6 +33,8 @@ const app = {
   load_model: "加载模型",
   draw_mask: "遮罩",
   draw_roi: "ROI",
+  pre_pic: "上一张",
+  next_pic: "下一张",
 };
 
 const config_panel = {

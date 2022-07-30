@@ -33,6 +33,8 @@ const app = {
   load_model: "Load Model",
   draw_mask: "Mask",
   draw_roi: "ROI",
+  pre_pic: "Prev",
+  next_pic: "Next",
 };
 
 const config_panel = {

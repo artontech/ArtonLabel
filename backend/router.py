@@ -13,6 +13,7 @@ def make_app():
         (r"/annotation/loadMask", annotation.LoadMask, dict(name="load mask")),
 
         (r"/io/file", io.File, dict(name="get file")),
+        (r"/io/next", io.Next, dict(name="get prev/next file name")),
 
         (r"/mrcnn", mrcnn.MrcnnWebSocket),
         (r"/mrcnn/detect", mrcnn.Detect, dict(name="mrcnn detect")),

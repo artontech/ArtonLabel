@@ -60,7 +60,9 @@ class LoadConfig(DefaultHandler):
                 "classes": [
                     {
                         "name": "unknown",
-                        "color": "#000000"
+                        "color": "#000000",
+                        "opacityMask": 0.5,
+                        "opacityRoi": 0.9
                     }
                 ]
             }

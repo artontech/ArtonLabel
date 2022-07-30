@@ -7,7 +7,7 @@
       </a-layout-sider>
       <a-layout-content :style="{ margin: '16px 16px 0', overflow: 'initial' }">
         <a-card class="view-wrapper">
-          <router-view />
+          <router-view v-if="isRouterAlive" />
         </a-card>
       </a-layout-content>
     </a-layout>
@@ -32,6 +32,25 @@ export default {
     hasMenu() {
       return [""].indexOf(this.$route.name) > -1;
     },
+  },
+  data() {
+    return {
+      isRouterAlive: true,
+    }
+  },
+  methods: {
+    reload() {
+      const vm = this;
+      vm.isRouterAlive = false;
+      vm.$nextTick(() => {
+        vm.isRouterAlive = true;
+      });
+    }
+  },
+  provide() {
+    return {
+      reload: this.reload,
+    }
   },
 };
 </script>

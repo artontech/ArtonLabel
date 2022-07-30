@@ -26,22 +26,38 @@
             v-model="plugin"
           />
         </span>
-        <a-button type="primary" :loading="loading" @click="onButton1Click">
-          {{ $t("app.load_model") }}
-        </a-button>
+        <span>
+          <a-button
+            type="primary"
+            :loading="loading"
+            @click="onButtonLoadModelClick"
+          >
+            {{ $t("app.load_model") }}
+          </a-button>
+          <a-divider type="vertical" />
+          <a-button-group size="small">
+            <a-button @click="onButtonPrevClick">
+              {{ $t("app.pre_pic") }}
+            </a-button>
+            <a-button @click="onButtonNextClick">
+              {{ $t("app.next_pic") }}
+            </a-button>
+          </a-button-group>
+        </span>
         <a-divider />
         <a-table
+          row-key="key"
           size="small"
-          :row-selection="rowSelection"
           :columns="columns"
           :data-source="instances"
           :pagination="pagination"
+          :row-selection="rowSelection"
         ></a-table>
         <a-button-group>
-          <a-button @click="onButton2Click">
+          <a-button @click="onButtonDrawMaskClick">
             {{ $t("app.draw_mask") }}
           </a-button>
-          <a-button @click="onButton3Click">
+          <a-button @click="onButtonDrawRoiClick">
             {{ $t("app.draw_roi") }}
           </a-button>
         </a-button-group>
@@ -58,6 +74,7 @@ import Konva from "konva";
 // we need to enable all events on Konva, even when we are dragging a node
 // so it triggers touchmove correctly
 Konva.hitOnDragEnabled = true;
+const freezeSizeNodeName = "freeze-size"; // 设置要冻结缩放的元素name: freezeSizeNodeName
 var lastCenter = null;
 var lastDist = 0;
 
@@ -89,15 +106,20 @@ export default {
       const vm = this;
       return {
         onChange: (selectedRowKeys, selectedRows) => {
-          selectedRowKeys;
-          vm.selectedInstances = selectedRows;
+          selectedRows;
+          vm.selectedInstanceKeys = selectedRowKeys;
         },
-        getCheckboxProps: (record) => ({
-          props: {
-            disabled: record.name === "Disabled User", // Column configuration not to be checked
-            name: record.name,
-          },
-        }),
+        getCheckboxProps: (record) => {
+          return {
+            props: {
+              defaultChecked: false,
+              disabled: record.name === "Disabled", // Column configuration not to be checked
+              name: record.name,
+            },
+          };
+        },
+        columnWidth: 30,
+        selectedRowKeys: vm.selectedInstanceKeys,
       };
     },
   },
@@ -121,10 +143,11 @@ export default {
         position: "bottom",
         pageSize: 5,
       },
-      selectedInstances: null,
+      selectedInstanceKeys: [],
       classes: [],
     };
   },
+  inject: ["reload"],
   methods: {
     init() {
       const vm = this;
@@ -154,10 +177,11 @@ export default {
           id: "konva-layer",
         });
         vm.stage.add(vm.layer);
+      } else {
+        vm.layer.destroyChildren();
       }
 
       vm.maskGroup = new Konva.Group({
-        opacity: 0.5,
         x: 0,
         y: 0,
         draggable: false,
@@ -165,7 +189,6 @@ export default {
       vm.layer.add(vm.maskGroup);
 
       vm.roiGroup = new Konva.Group({
-        opacity: 0.5,
         x: 0,
         y: 0,
         draggable: false,
@@ -199,7 +222,11 @@ export default {
         console.log(`[Error] failed to load annotation config ${body.image_name}`);
       };
       vm.$http
-        .post(`http://${vm.setting.address}/annotation/loadConfig`, body, options)
+        .post(
+          `http://${vm.setting.address}/annotation/loadConfig`,
+          body,
+          options
+        )
         .then(
           (resp) => {
             const data = resp.body?.data;
@@ -240,6 +267,7 @@ export default {
               vm.instances.splice(0, vm.instances.length);
               data.instances?.forEach((instance) => {
                 vm.instances.push(instance);
+                vm.selectedInstanceKeys.push(instance.key);
               });
               vm.loading = false;
             } else {
@@ -251,21 +279,31 @@ export default {
           }
         );
     },
-    loadMask(mask) {
+    loadMask(instance, info) {
       const vm = this;
-      
+
       // Sending request
       const workspace = vm.setting.workspace;
       Konva.Image.fromURL(
-        `http://${vm.setting.address}/annotation/loadMask?workspace=${workspace}&image_name=${vm.filename}&mask_name=${mask}`,
+        `http://${vm.setting.address}/annotation/loadMask?workspace=${workspace}&image_name=${vm.filename}&mask_name=${instance.mask}`,
         (img) => {
           img.setAttrs({
+            id: `mask-${instance.key}`,
             width: img.attrs.image.naturalWidth,
             height: img.attrs.image.naturalHeight,
             x: 0,
             y: 0,
             draggable: false,
+            opacity: info?.opacityMask ?? 0.5,
           });
+          if (info?.color) {
+            img.cache();
+            img.filters([Konva.Filters.RGB]);
+            const rgb = Konva.Util.getRGB(info.color);
+            img.red(rgb.r);
+            img.green(rgb.g);
+            img.blue(rgb.b);
+          }
           vm.maskGroup.add(img);
         }
       );
@@ -276,7 +314,7 @@ export default {
         vm.layer.destroyChildren();
       }
     },
-    onButton1Click() {
+    onButtonLoadModelClick() {
       const vm = this;
 
       // Sending request
@@ -307,29 +345,52 @@ export default {
           }
         );
     },
-    onButton2Click() {
+    onButtonDrawMaskClick() {
       const vm = this;
-      vm.clearShape();
-      vm.selectedInstances?.forEach((instance) => {
-        vm.loadMask(instance.mask);
+      vm.clearMask();
+      vm.selectedInstanceKeys?.forEach((key) => {
+        const instance = vm.getInstance(key);
+        const info = vm.getClassInfo(instance.class);
+        vm.loadMask(instance, info);
       });
     },
-    onButton3Click() {
+    onButtonDrawRoiClick() {
       const vm = this;
-      vm.clearShape();
-      vm.selectedInstances?.forEach((instance) => {
+      vm.clearRoi();
+      vm.selectedInstanceKeys?.forEach((key) => {
+        const instance = vm.getInstance(key);
         const roi = instance.roi;
-        const color = vm.getClassInfo(instance.class)?.color;
+        const info = vm.getClassInfo(instance.class);
         var rect = new Konva.Rect({
+          id: `roi-${instance.key}`,
           x: roi[0],
           y: roi[1],
           width: roi[2] - roi[0],
           height: roi[3] - roi[1],
-          fill: color ?? "black",
-          stroke: "black",
-          strokeWidth: 4,
+          opacity: info?.opacityRoi ?? 0.9,
+          stroke: info?.color ?? "white",
+          strokeScaleEnabled: false,
+          strokeWidth: 3,
         });
         vm.roiGroup.add(rect);
+      });
+    },
+    onButtonPrevClick() {
+      const vm = this;
+      vm.getNext().then((data) => {
+        if (data?.prev) {
+          vm.$router.go("Editor", `filename=${data.prev}`);
+          vm.reload();
+        }
+      });
+    },
+    onButtonNextClick() {
+      const vm = this;
+      vm.getNext().then((data) => {
+        if (data?.next) {
+          vm.$router.go("Editor", `filename=${data.next}`);
+          vm.reload();
+        }
       });
     },
     onSelect1Change(value) {
@@ -423,9 +484,14 @@ export default {
         y: pointer.y - mousePointTo.y * scaleY,
       };
 
+      // Enable smoothing dynamically
+      vm.layer.imageSmoothingEnabled(scaleX / vm.width < 0.01);
+
       vm.stage.scaleX(scaleX);
       vm.stage.scaleY(scaleY);
       vm.stage.position(newPos);
+
+      vm.freezeNodeSize();
     },
     rescalePicture(img) {
       const vm = this;
@@ -442,9 +508,22 @@ export default {
       vm.stage.scaleY(scale);
       return true;
     },
-    clearShape() {
+    freezeNodeSize() {
+      const vm = this;
+
+      // 冻结节点尺寸
+      const nodes = vm.layer.find("." + freezeSizeNodeName);
+      nodes.forEach((node) => {
+        node.scaleX(1 / vm.stage.scaleX());
+        node.scaleY(1 / vm.stage.scaleY());
+      });
+    },
+    clearMask() {
       const vm = this;
       vm.maskGroup.destroyChildren();
+    },
+    clearRoi() {
+      const vm = this;
       vm.roiGroup.destroyChildren();
     },
     getClassInfo(name) {
@@ -454,6 +533,42 @@ export default {
         if (name === cls.name) return cls;
       }
       return null;
+    },
+    getInstance(key) {
+      const vm = this;
+      for (let i = 0; i < vm.instances.length; i++) {
+        const instance = vm.instances[i];
+        if (key === instance.key) return instance;
+      }
+      return null;
+    },
+    getNext() {
+      const vm = this;
+
+      // Sending request
+      const workspace = vm.setting.workspace;
+      const body = {
+        workspace,
+        filename: vm.filename,
+      };
+      const onError = () => {
+        throw `[Error] failed to get next file ${body.filename}`;
+      };
+      return vm.$http
+        .post(`http://${vm.setting.address}/io/next`, body, options)
+        .then(
+          (resp) => {
+            const data = resp.body?.data;
+            if (data && resp.body?.status === "success") {
+              return data;
+            } else {
+              onError();
+            }
+          },
+          (error) => {
+            onError(error);
+          }
+        );
     },
   },
   mounted() {
