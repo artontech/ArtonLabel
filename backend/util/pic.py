@@ -14,7 +14,10 @@ def cv2bytes(img: np.ndarray, format: str = ".png") -> bytes:
 
 def cv2transparent(img: np.ndarray, color: int):
     ''' set transparent color TODO: support custom color '''
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+    if len(img.shape) == 2:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGRA)
+    else:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
     b=np.ones((img.shape[0],img.shape[1],3),dtype=np.uint8)*color
     c=np.array(np.sum(img[:,:,:3]==b,axis=-1)/3,dtype=np.uint8)
     img[:,:,-1][c==1]=0

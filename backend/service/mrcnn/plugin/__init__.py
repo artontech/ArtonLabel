@@ -99,7 +99,7 @@ def save_annotation(
     mask = masks[:, :, i]
     mask_file_name = "mask_%s.png" % (key)
     mask_file_path = os.path.join(annotation_dir, mask_file_name)
-    save_mask(mask_file_path, height, width, mask)
+    save_mask_gray(mask_file_path, height, width, mask)
 
     polygon = []
     if save_polygon:
@@ -140,7 +140,7 @@ def save_annotation(
     json.dump(annotation, fp)
   return annotation_path
 
-def save_mask(file_path, height, width, mask):
+def save_mask_gbr(file_path, height, width, mask):
   image = np.zeros([height, width, 3], dtype=np.uint8)
   color = [255, 255, 255] # BGR
   for c in range(3):
@@ -149,4 +149,13 @@ def save_mask(file_path, height, width, mask):
       color[c],
       image[:, :, c]
     )
+  cv2.imwrite(file_path, image)
+
+def save_mask_gray(file_path, height, width, mask):
+  image = np.zeros([height, width], dtype=np.uint8)
+  image = np.where(
+    mask == 1,
+    255,
+    0
+  )
   cv2.imwrite(file_path, image)
