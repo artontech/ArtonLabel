@@ -31,10 +31,12 @@ const all = {
 const app = {
   project_name: "ArtonLabel",
   load_model: "Load Model",
+  draw: "Draw",
   draw_mask: "Mask",
   draw_roi: "ROI",
   pre_pic: "Prev",
   next_pic: "Next",
+  edit_label: "Edit Label",
 };
 
 const config_panel = {

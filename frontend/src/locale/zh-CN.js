@@ -31,10 +31,12 @@ const all = {
 const app = {
   project_name: "ArtonLabel",
   load_model: "加载模型",
+  draw: "绘制",
   draw_mask: "遮罩",
   draw_roi: "ROI",
   pre_pic: "上一张",
   next_pic: "下一张",
+  edit_label: "管理标签",
 };
 
 const config_panel = {

@@ -45,22 +45,52 @@
           </a-button-group>
         </span>
         <a-divider />
-        <a-table
-          row-key="key"
-          size="small"
-          :columns="columns"
-          :data-source="instances"
-          :pagination="pagination"
-          :row-selection="rowSelection"
-        ></a-table>
-        <a-button-group>
-          <a-button @click="onButtonDrawMaskClick">
-            {{ $t("app.draw_mask") }}
-          </a-button>
-          <a-button @click="onButtonDrawRoiClick">
-            {{ $t("app.draw_roi") }}
-          </a-button>
-        </a-button-group>
+        <float-form
+          ref="form1"
+          title="Label Form"
+          :defaultLeft="250"
+          :defaultTop="0"
+        >
+          <a-table
+            class="table-label"
+            row-key="key"
+            size="small"
+            :columns="columns"
+            :data-source="instances"
+            :pagination="pagination"
+            :row-selection="rowSelection"
+          >
+            <div class="textclip" slot="class" slot-scope="text">
+              <a-tooltip>
+                <template slot="title">{{ text }}</template>
+                {{ text }}
+              </a-tooltip>
+            </div>
+            <a-tooltip slot="scores" slot-scope="text">
+              <template slot="title">{{ text }}</template>
+              {{ text }}
+            </a-tooltip>
+          </a-table>
+        </float-form>
+        <span>
+          {{ $t("app.draw") }}:
+          <a-button-group>
+            <a-button @click="onButtonDrawMaskClick">
+              {{ $t("app.draw_mask") }}
+            </a-button>
+            <a-button @click="onButtonDrawRoiClick">
+              {{ $t("app.draw_roi") }}
+            </a-button>
+          </a-button-group>
+        </span>
+        <span>
+          {{ $t("all.action") }}:
+          <a-button-group>
+            <a-button @click="$refs.form1.toggleShow()">
+              {{ $t("app.edit_label") }}
+            </a-button>
+          </a-button-group>
+        </span>
       </a-space>
     </div>
     <div class="konva-container" :id="konvaContainerId"></div>
@@ -79,18 +109,22 @@ var lastCenter = null;
 var lastDist = 0;
 
 import options from "@/config/request";
+import FloatForm from "@/components/FloatForm.vue";
 
 const columns = [
   {
     title: "Class",
     dataIndex: "class",
     key: "class",
+    scopedSlots: { customRender: 'class' },
+    width: "60%",
   },
   {
     title: "Scores",
     dataIndex: "scores",
     key: "scores",
     ellipsis: true,
+    scopedSlots: { customRender: 'class' },
   },
 ];
 
@@ -100,14 +134,33 @@ export default {
     vm.filename = vm.$route.query.filename;
     vm.setting = vm.$store.state.setting;
   },
-  components: {},
+  components: {
+    FloatForm,
+  },
   computed: {
     rowSelection() {
       const vm = this;
       return {
         onChange: (selectedRowKeys, selectedRows) => {
           selectedRows;
-          vm.selectedInstanceKeys = selectedRowKeys;
+          selectedRowKeys;
+        },
+        onSelect: (record, selected, selectedRows) => {
+          record;
+          selected;
+
+          vm.selectedInstanceKeys = [];
+          selectedRows?.forEach((instance) => {
+            vm.selectedInstanceKeys.push(instance.key);
+          });
+        },
+        onSelectAll: (selected) => {
+          vm.selectedInstanceKeys = [];
+          if (selected) {
+            vm.instances?.forEach((instance) => {
+              vm.selectedInstanceKeys.push(instance.key);
+            });
+          }
         },
         getCheckboxProps: (record) => {
           return {
@@ -149,7 +202,7 @@ export default {
   },
   inject: ["reload"],
   methods: {
-    init() {
+    async init() {
       const vm = this;
       const container = document.getElementById(vm.konvaContainerId);
       if (!container) return;
@@ -195,6 +248,8 @@ export default {
       });
       vm.layer.add(vm.roiGroup);
 
+      await vm.loadAnnotationConfig();
+
       const workspace = vm.setting.workspace;
       Konva.Image.fromURL(
         `http://${vm.setting.address}/io/file?workspace=${workspace}&filename=${vm.filename}`,
@@ -211,17 +266,23 @@ export default {
           img.zIndex(0);
           vm.maskGroup.zIndex(1);
           vm.roiGroup.zIndex(2);
+
+          vm.loadAnnotation();
         }
       );
+    },
+    loadAnnotationConfig() {
+      const vm = this;
 
       // Sending request
+      const workspace = vm.setting.workspace;
       const body = {
         workspace,
       };
       const onError = () => {
         console.log(`[Error] failed to load annotation config ${body.image_name}`);
       };
-      vm.$http
+      let promise = vm.$http
         .post(
           `http://${vm.setting.address}/annotation/loadConfig`,
           body,
@@ -243,6 +304,7 @@ export default {
             onError(error);
           }
         );
+      return promise;
     },
     loadAnnotation() {
       const vm = this;
@@ -360,6 +422,8 @@ export default {
       vm.selectedInstanceKeys?.forEach((key) => {
         const instance = vm.getInstance(key);
         const roi = instance.roi;
+        if (!roi || roi.length <= 0) return;
+
         const info = vm.getClassInfo(instance.class);
         var rect = new Konva.Rect({
           id: `roi-${instance.key}`,
@@ -601,8 +665,19 @@ export default {
   flex-grow: 1;
 }
 
+.table-label {
+  max-width: 500px;
+}
+
 .ant-table-pagination.ant-pagination {
-  float: left;
+  float: right;
+}
+
+.ant-table-tbody .textclip {
+  cursor: default;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ant-divider-horizontal {
