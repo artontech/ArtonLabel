@@ -2,6 +2,7 @@ import Vue from "vue";
 import Vuex from "vuex";
 import persistedState from "vuex-persistedstate";
 
+import prop from "./prop";
 import setting from "./setting";
 
 Vue.use(Vuex);
@@ -25,9 +26,11 @@ const options = {
     }),
   ],
   state: {
+    ...prop.state,
     ...setting.state,
   },
   mutations: {
+    ...prop.mutations,
     ...setting.mutations,
   },
 };

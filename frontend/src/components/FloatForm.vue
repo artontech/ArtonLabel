@@ -27,11 +27,16 @@
 <script>
 export default {
   name: "float-form",
+  beforeMount() {
+    const vm = this;
+    vm.prop = vm.$store.state.prop;
+  },
   data() {
     return {
       isMove: false,
       offsetX: 0,
       offsetY: 0,
+      prop: {},
       left: 0,
       top: 0,
       visible: false,
@@ -44,10 +49,10 @@ export default {
     },
   },
   methods: {
-    toggleShow() {
+    toggleShow(defaultLeft, defaultTop) {
       const vm = this;
-      if (vm.defaultLeft) vm.left = vm.defaultLeft;
-      if (vm.defaultTop) vm.top = vm.defaultTop;
+      if (defaultLeft) vm.left = defaultLeft;
+      if (defaultTop) vm.top = defaultTop;
       vm.visible = !vm.visible;
       vm.showMask = false;
     },
@@ -71,18 +76,15 @@ export default {
     },
     mouseup() {
       const vm = this;
+
       vm.isMove = false;
+      vm.$store.commit("updatePropNocache", {
+        form_left: vm.left,
+        form_top: vm.top,
+      });
     },
   },
   props: {
-    defaultLeft: {
-      type: Number,
-      default: 0,
-    },
-    defaultTop: {
-      type: Number,
-      default: 0,
-    },
     title: {
       type: String,
       default: "",
@@ -98,7 +100,7 @@ export default {
   height: auto;
   position: fixed;
   box-shadow: 0 0 5px 3px #95a5a6;
-  z-index: 1;
+  z-index: 10;
 }
 .float-form .mask {
   width: 100vw;
@@ -106,7 +108,7 @@ export default {
   position: fixed;
   left: 0px;
   top: 0px;
-  z-index: 1;
+  z-index: 10;
 }
 .float-form .header {
   height: 30px;

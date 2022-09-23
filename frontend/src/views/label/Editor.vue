@@ -6,8 +6,8 @@
           {{ $t("all.model") }}:
           <a-select
             class="toolbox-child"
-            default-value="mrcnn"
             size="small"
+            :default-value="prop.default_model"
             @change="onSelect1Change"
           >
             <a-select-option value="mrcnn"> MRCNN </a-select-option>
@@ -51,42 +51,44 @@
           :defaultLeft="250"
           :defaultTop="0"
         >
-          <a-table
-            class="table-label"
-            row-key="key"
-            size="small"
-            :columns="columns"
-            :data-source="instances"
-            :pagination="pagination"
-            :row-selection="rowSelection"
-          >
-            <div class="textclip" slot="class" slot-scope="text">
-              <a-tooltip>
+          <a-space direction="vertical">
+            <span>
+              {{ $t("app.draw") }}:
+              <a-button-group>
+                <a-button @click="onButtonDrawMaskClick">
+                  {{ $t("app.draw_mask") }}
+                </a-button>
+                <a-button @click="onButtonDrawRoiClick">
+                  {{ $t("app.draw_roi") }}
+                </a-button>
+              </a-button-group>
+            </span>
+            <a-table
+              class="table-label"
+              row-key="key"
+              size="small"
+              :columns="columns"
+              :data-source="instances"
+              :pagination="pagination"
+              :row-selection="rowSelection"
+            >
+              <div class="textclip" slot="class" slot-scope="text">
+                <a-tooltip>
+                  <template slot="title">{{ text }}</template>
+                  {{ text }}
+                </a-tooltip>
+              </div>
+              <a-tooltip slot="scores" slot-scope="text">
                 <template slot="title">{{ text }}</template>
                 {{ text }}
               </a-tooltip>
-            </div>
-            <a-tooltip slot="scores" slot-scope="text">
-              <template slot="title">{{ text }}</template>
-              {{ text }}
-            </a-tooltip>
-          </a-table>
+            </a-table>
+          </a-space>
         </float-form>
-        <span>
-          {{ $t("app.draw") }}:
-          <a-button-group>
-            <a-button @click="onButtonDrawMaskClick">
-              {{ $t("app.draw_mask") }}
-            </a-button>
-            <a-button @click="onButtonDrawRoiClick">
-              {{ $t("app.draw_roi") }}
-            </a-button>
-          </a-button-group>
-        </span>
         <span>
           {{ $t("all.action") }}:
           <a-button-group>
-            <a-button @click="$refs.form1.toggleShow()">
+            <a-button @click="showLabelTable">
               {{ $t("app.edit_label") }}
             </a-button>
           </a-button-group>
@@ -132,7 +134,12 @@ export default {
   beforeMount() {
     const vm = this;
     vm.filename = vm.$route.query.filename;
+    vm.prop = vm.$store.state.prop;
     vm.setting = vm.$store.state.setting;
+
+    const { default_model, default_plugin } = vm.prop;
+    if (default_model) vm.model = default_model;
+    if (default_plugin) vm.plugin = default_plugin;
   },
   components: {
     FloatForm,
@@ -187,8 +194,8 @@ export default {
       roiGroup: null,
       width: 0,
       height: 0,
-      model: "mrcnn",
-      plugin: "coco",
+      model: null,
+      plugin: null,
       loading: false,
       instances: [],
       columns,
@@ -196,6 +203,7 @@ export default {
         position: "bottom",
         pageSize: 5,
       },
+      prop: {},
       selectedInstanceKeys: [],
       classes: [],
     };
@@ -253,7 +261,7 @@ export default {
       const workspace = vm.setting.workspace;
       Konva.Image.fromURL(
         `http://${vm.setting.address}/io/file?workspace=${workspace}&filename=${vm.filename}`,
-        (img) => {
+        async (img) => {
           img.setAttrs({
             width: img.attrs.image.naturalWidth,
             height: img.attrs.image.naturalHeight,
@@ -267,7 +275,8 @@ export default {
           vm.maskGroup.zIndex(1);
           vm.roiGroup.zIndex(2);
 
-          vm.loadAnnotation();
+          await vm.loadAnnotation();
+          if (vm.prop.nocache.show_label_table) vm.showLabelTable();
         }
       );
     },
@@ -320,7 +329,7 @@ export default {
         vm.loading = false;
         console.log(`[Error] failed to load annotation ${body.image_name}`);
       };
-      vm.$http
+      let promise = vm.$http
         .post(`http://${vm.setting.address}/annotation/load`, body, options)
         .then(
           (resp) => {
@@ -340,6 +349,7 @@ export default {
             onError(error);
           }
         );
+      return promise;
     },
     loadMask(instance, info) {
       const vm = this;
@@ -398,6 +408,10 @@ export default {
             const data = resp.body?.data;
             if (data && resp.body?.status === "success") {
               vm.loadAnnotation();
+              vm.$store.commit("updateProp", {
+                default_plugin: vm.plugin,
+                default_model: vm.model,
+              });
             } else {
               onError();
             }
@@ -572,6 +586,14 @@ export default {
       vm.stage.scaleY(scale);
       return true;
     },
+    showLabelTable() {
+      const vm = this;
+      const nocache = vm.prop.nocache;
+      vm.$refs.form1.toggleShow(nocache.form_left, nocache.form_top);
+      vm.$store.commit("updatePropNocache", {
+        show_label_table: true,
+      });
+    },
     freezeNodeSize() {
       const vm = this;
 
@@ -662,6 +684,7 @@ export default {
 }
 
 .konva-container {
+  border-style: ridge;
   flex-grow: 1;
 }
 

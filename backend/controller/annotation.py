@@ -29,7 +29,7 @@ class Load(DefaultHandler):
         annotation_dir = os.path.join(workspace, "annotation")
         path = os.path.join(annotation_dir, image_name, "annotation.json")
         if not os.path.exists(path):
-            self.write_json(err="no_data", data={"file": path}, status_code=404)
+            self.write_json(err="no_data", data={"file": path}, status_code=206)
             return
 
         with open(path, 'r') as f:
